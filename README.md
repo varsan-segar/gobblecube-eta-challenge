@@ -10,13 +10,11 @@ Experiment-driven tabular ML with progressively richer features:
 
 | Experiment | Description | Dev MAE (s) |
 |-----------|-------------|-------------|
-| exp01 | Baseline (XGBoost, 6 features) | TBD |
-| exp02 | Zone geometry features (haversine, bearing, boroughs) | TBD |
-| exp03 | Temporal features (sin/cos cyclic encoding) | TBD |
-| exp04 | Zone-pair aggregate statistics | TBD |
-| exp05 | LightGBM + Optuna hyperparameter tuning | TBD |
-| exp06 | XGBoost + Optuna tuning (optional) | TBD |
-| exp07 | Neural zone embeddings (optional) | TBD |
+| exp01 | Baseline (XGBoost, 6 features) | 352.9 |
+| exp02 | Enriched features (26 features: zone geometry, temporal, borough) | 292.1 |
+| exp03 | Zone-pair aggregate statistics | TBD |
+| exp04 | LightGBM + hyperparameter tuning | TBD |
+| exp05 | XGBoost + Optuna tuning | TBD |
 
 ## Setup
 
