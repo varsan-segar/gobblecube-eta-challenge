@@ -12,6 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
+from features import build_features_scalar, get_feature_names
+
 _MODEL_PATH = Path(__file__).parent / "model.pkl"
 
 with open(_MODEL_PATH, "rb") as _f:
@@ -21,8 +23,7 @@ with open(_MODEL_PATH, "rb") as _f:
 if hasattr(_MODEL, "get_booster"):
     _MODEL.get_booster().feature_names = None
 
-# Feature order must match baseline.py:
-#   pickup_zone, dropoff_zone, hour, dow, month, passenger_count
+_FEATURE_NAMES = get_feature_names()
 
 
 def predict(request: dict) -> float:
@@ -37,15 +38,12 @@ def predict(request: dict) -> float:
         }
     """
     ts = datetime.fromisoformat(request["requested_at"])
-    x = np.array(
-        [[
-            int(request["pickup_zone"]),
-            int(request["dropoff_zone"]),
-            ts.hour,
-            ts.weekday(),
-            ts.month,
-            int(request["passenger_count"]),
-        ]],
-        dtype=np.int32,
+    x = build_features_scalar(
+        pickup_zone=int(request["pickup_zone"]),
+        dropoff_zone=int(request["dropoff_zone"]),
+        hour=ts.hour,
+        dow=ts.weekday(),
+        month=ts.month,
+        passenger_count=int(request["passenger_count"]),
     )
     return float(_MODEL.predict(x)[0])
