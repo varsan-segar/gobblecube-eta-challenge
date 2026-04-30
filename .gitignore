@@ -1,0 +1,24 @@
+# Experiments and scratch work (local only)
+_work/
+
+# Large data files (downloaded or generated)
+data/*.parquet
+
+# Model artifacts (generated)
+models/*.pkl
+models/*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+*.so
+
+# Secrets
+.hash_salt
+**/.hash_salt
+
+# OS
+.DS_Store
+Thumbs.db
