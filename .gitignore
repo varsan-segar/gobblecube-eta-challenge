@@ -3,10 +3,15 @@ _work/
 
 # Large data files (downloaded or generated)
 data/*.parquet
+data/raw/
+data/taxi_zones/
+data/taxi_zones.zip
 
 # Model artifacts (generated)
 models/*.pkl
 models/*.onnx
+model.pkl
+src/model.pkl
 
 # Python
 __pycache__/
