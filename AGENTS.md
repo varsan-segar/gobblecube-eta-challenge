@@ -1,47 +1,52 @@
-# Cline Instructions
+# AI Agents & Project Instructions
+
+## AI Tooling Used
+This project was developed iteratively using a combination of powerful agentic AI models:
+- **DeepSeek-V4-Pro** (via Hugging Face API in Cline)
+- **Claude Opus 4.6** (in Google Antigravity)
+- **Gemini 3.1 Pro** (in Google Antigravity)
+
+These tools were pivotal for rapidly prototyping architectures (XGBoost vs. LightGBM vs. PyTorch), setting up `DataLoader` boilerplate, and ensuring the final Docker build stayed under the 2.5 GB limit by isolating a CPU-only PyTorch wheel.
 
 ## Project Context
-NYC taxi trip duration prediction for GobbleCube AI Builder hiring challenge.
-Beat the baseline XGBoost MAE of ~350s on held-out 2024 Dev set using richer features and LightGBM.
+NYC taxi trip duration prediction for the GobbleCube AI Builder hiring challenge.
+**Objective**: Beat the baseline XGBoost MAE of ~350s on the held-out 2024 Dev set using richer spatial features and a PyTorch Neural Network.
 
 ## Style Guide
-- Python 3.10+, use type hints on all public functions
-- 4-space indentation, 100-char line limit
-- NumPy-style docstrings for public functions
-- Use pathlib for file paths, not os.path
-- Prefer vectorized pandas/NumPy over Python loops
-- No bare excepts — catch specific exceptions
+- Python 3.10+, use type hints on all public functions.
+- 4-space indentation, 100-char line limit.
+- NumPy-style docstrings for public functions and classes.
+- Use `pathlib` for file paths, not `os.path`.
+- Prefer vectorized `pandas`/`numpy` or PyTorch tensors over Python loops.
+- No bare excepts — catch specific exceptions.
 
 ## Commands
 - Run contract tests: `pytest tests/ -v`
-- Run local grading: `python src/grade.py`
+- Run local grading: `python grade.py`
 - Download data: `python data/download_data.py`
 - Build Docker: `docker build -t gobblecube-eta .`
 
-## Architecture
-- `src/predict.py` — Inference entrypoint (loaded by grader). Must expose `predict(request: dict) -> float`
-- `src/features.py` — Shared feature engineering module. Imported by experiments, train.py, and predict.py
-- `src/train.py` — Final training script. Loads data, builds features, saves model.pkl
-- `src/grade.py` — NEVER MODIFIED. Official local scoring harness
-- `tests/test_submission.py` — Contract tests from starter. Must always pass
-- `data/download_data.py` — Downloads NYC taxi parquet files (gitignored)
-- `_work/experiments/` — Gitignored. All experimental scripts live here
+## Architecture (Root-Level)
+- `predict.py` — Inference entrypoint (loaded by grader). Exposes `predict(request: dict) -> float`.
+- `features.py` — Shared feature engineering module (static zone metadata, haversine, bearings).
+- `train.py` — Final training script. Loads data, builds features, trains the MLP, and saves `model.pkl`.
+- `grade.py` — NEVER MODIFIED. Official local scoring harness.
+- `tests/test_submission.py` — Contract tests from starter. Must always pass.
+- `data/download_data.py` — Downloads NYC taxi parquet files (gitignored).
 
 ## Behavioral Constraints
-- `src/grade.py` must never be modified — it's the official scoring contract
-- `tests/test_submission.py` must always pass before any commit
-- No parquet files in git — they are in .gitignore
-- `models/model.pkl` is gitignored during development, force-added at final submission
-- All experiments go in gitignored `_work/` folder, never committed
-- Only winning approach gets promoted to `src/train.py` and `src/predict.py`
-- Pickle model must be CPU-only inference, no GPU required at runtime
-- Inference must complete in < 200ms per request
-- No external API calls in predict()
+- `grade.py` must never be modified — it's the official scoring contract.
+- `tests/test_submission.py` must always pass before any commit.
+- No parquet files in git — they are explicitly excluded in `.gitignore`.
+- Pickled model weights (`model.pkl`) are tracked natively by git.
+- Pickle model must execute using CPU-only inference; no GPU required at runtime.
+- Inference must complete in < 200ms per request.
+- Docker image must be < 2.5 GB.
+- No external API calls inside `predict()`.
 
 ## Data
-- NYC TLC Green + Yellow Taxi, 2022–2024
-- `data/train.parquet` — Training data (download with download_data.py)
-- `data/dev.parquet` — Held-out 2024 Dev set (for score tracking)
-- `data/sample_1M.parquet` — 1M row sample for fast experimentation
-- `data/zone_lookup.csv` — NYC taxi zone metadata (to be downloaded)
-- `data/zone_centroids.csv` — Pre-computed zone lat/lon centroids (to be computed)
+- NYC TLC Green + Yellow Taxi, 2022–2024.
+- `data/train.parquet` — Training data (downloaded).
+- `data/dev.parquet` — Held-out 2024 Dev set (for local score tracking).
+- `data/zone_lookup.csv` — NYC taxi zone metadata.
+- `data/zone_centroids.csv` — Pre-computed zone lat/lon centroids for spatial features.
