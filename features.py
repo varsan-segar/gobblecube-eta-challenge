@@ -5,6 +5,7 @@ Features:
     Zone geometry: haversine_km, bearing_deg, pickup_borough, dropoff_borough
     Zone-pair interaction: same_borough flag
     Temporal: hour_sin, hour_cos (cyclic), is_weekend, is_rush_hour
+    Interactions: distance × rush hour, distance × time-of-day (hour_sin/cos)
 """
 
 from __future__ import annotations
@@ -98,11 +99,18 @@ TEMP_FEATURES: List[str] = [
     "is_weekend",
     "is_rush_hour",
 ]
+# Interaction features (distance × time)
+INTERACTION_FEATURES: List[str] = [
+    "haversine_x_rush",
+    "log_haversine_x_rush",
+    "haversine_x_hour_sin",
+    "haversine_x_hour_cos",
+]
 # Borough features (one-hot, dynamically named)
 # Generated at runtime from NUM_BOROUGHS
 
 ALL_NUMERIC_FEATURES: List[str] = (
-    NUMERIC_FEATURES + GEO_FEATURES + TEMP_FEATURES
+    NUMERIC_FEATURES + GEO_FEATURES + TEMP_FEATURES + INTERACTION_FEATURES
 )
 
 NUM_BOROUGHS: int = 0  # Set after _load_centroids
@@ -165,6 +173,11 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     haversine = _haversine_vec(pu_lat, pu_lon, do_lat, do_lon).astype("float32")
     bearing = _bearing_vec(pu_lat, pu_lon, do_lat, do_lon).astype("float32")
+    log_hav = np.log1p(haversine).astype("float32")
+    hour_sin = np.sin(2 * np.pi * hour / 24).astype("float32")
+    hour_cos = np.cos(2 * np.pi * hour / 24).astype("float32")
+    is_weekend = (dow >= 5).astype("int8")
+    is_rush = hour.isin([7, 8, 9, 17, 18, 19]).astype("float32")
 
     features = pd.DataFrame(
         {
@@ -176,11 +189,16 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
             "passenger_count": pax,
             "haversine_km": haversine,
             "bearing_deg": bearing,
-            "log_haversine": np.log1p(haversine).astype("float32"),
-            "hour_sin": np.sin(2 * np.pi * hour / 24).astype("float32"),
-            "hour_cos": np.cos(2 * np.pi * hour / 24).astype("float32"),
-            "is_weekend": (dow >= 5).astype("int8"),
-            "is_rush_hour": hour.isin([7, 8, 9, 17, 18, 19]).astype("int8"),
+            "log_haversine": log_hav,
+            "hour_sin": hour_sin,
+            "hour_cos": hour_cos,
+            "is_weekend": is_weekend,
+            "is_rush_hour": is_rush,
+            # Interaction features (distance × time-of-day)
+            "haversine_x_rush": (haversine * is_rush).astype("float32"),
+            "log_haversine_x_rush": (log_hav * is_rush).astype("float32"),
+            "haversine_x_hour_sin": (haversine * hour_sin).astype("float32"),
+            "haversine_x_hour_cos": (haversine * hour_cos).astype("float32"),
         }
     )
 
@@ -220,6 +238,18 @@ def build_features_scalar(pickup_zone: int, dropoff_zone: int,
         np.array([_zone_lon.get(dropoff_zone, -73.9)]),
     )[0])
 
+    log_hav = float(np.log1p(haversine))
+    hour_sin = float(np.sin(2 * np.pi * hour / 24))
+    hour_cos = float(np.cos(2 * np.pi * hour / 24))
+    is_weekend = 1.0 if dow >= 5 else 0.0
+    is_rush = 1.0 if hour in (7, 8, 9, 17, 18, 19) else 0.0
+
+    # Interaction features
+    haversine_x_rush = haversine * is_rush
+    log_haversine_x_rush = log_hav * is_rush
+    haversine_x_hour_sin = haversine * hour_sin
+    haversine_x_hour_cos = haversine * hour_cos
+
     pu_borough = _zone_borough.get(pickup_zone, "Unknown")
     do_borough = _zone_borough.get(dropoff_zone, "Unknown")
 
@@ -237,13 +267,19 @@ def build_features_scalar(pickup_zone: int, dropoff_zone: int,
     # Geometry
     row[idx] = haversine;            idx += 1
     row[idx] = bearing;              idx += 1
-    row[idx] = np.log1p(haversine);  idx += 1
+    row[idx] = log_hav;              idx += 1
 
     # Temporal
-    row[idx] = np.sin(2 * np.pi * hour / 24);  idx += 1
-    row[idx] = np.cos(2 * np.pi * hour / 24);  idx += 1
-    row[idx] = 1.0 if dow >= 5 else 0.0;        idx += 1
-    row[idx] = 1.0 if hour in (7, 8, 9, 17, 18, 19) else 0.0;  idx += 1
+    row[idx] = hour_sin;             idx += 1
+    row[idx] = hour_cos;             idx += 1
+    row[idx] = is_weekend;           idx += 1
+    row[idx] = is_rush;              idx += 1
+
+    # Interaction features (distance × time)
+    row[idx] = haversine_x_rush;      idx += 1
+    row[idx] = log_haversine_x_rush;  idx += 1
+    row[idx] = haversine_x_hour_sin;  idx += 1
+    row[idx] = haversine_x_hour_cos;  idx += 1
 
     # Borough features
     row[idx] = 1.0 if pu_borough == do_borough else 0.0;  idx += 1
