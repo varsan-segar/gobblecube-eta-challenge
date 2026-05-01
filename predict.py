@@ -15,11 +15,9 @@ import numpy as np
 from features import build_features_scalar, get_feature_names
 
 _MODEL_PATH = Path(__file__).parent / "model.pkl"
-
 with open(_MODEL_PATH, "rb") as _f:
     _MODEL = pickle.load(_f)
-# Disable xgboost's feature-name validation so we can predict on a bare
-# numpy array (skips per-call DataFrame construction overhead).
+# Disable feature-name validation if model supports it (covers both XGBoost and LightGBM).
 if hasattr(_MODEL, "get_booster"):
     _MODEL.get_booster().feature_names = None
 
