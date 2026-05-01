@@ -34,6 +34,8 @@ If I kept going, I would compute historical zone-pair average velocities. The ne
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+# Note: To run train.py, you will also need to install PyTorch manually:
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 # 2. Download data
 python data/download_data.py
