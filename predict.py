@@ -1,7 +1,9 @@
-"""Submission interface — this is what Gobblecube's grader imports.
+"""
+Inference Entrypoint for GobbleCube ETA Challenge.
 
-The grader will call `predict` once per held-out request. The signature below
-is fixed; everything else (model type, preprocessing, etc.) is yours to change.
+This module provides the `predict` function required by the grading harness. 
+It loads the trained PyTorch neural network and executes a forward pass 
+for a single trip request.
 """
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ import torch.nn as nn
 
 from features import build_features_scalar, get_feature_names
 
-# ── Model definition ─────────────────────────────────────────────────
+# --- Model Definition ---
 
 
 class ETAModel(nn.Module):
@@ -50,7 +52,7 @@ class ETAModel(nn.Module):
         return self.net(x).squeeze(-1)
 
 
-# ── Load model ────────────────────────────────────────────────────────
+# --- Model Loading ---
 
 _MODEL_PATH = Path(__file__).parent / "model.pkl"
 with open(_MODEL_PATH, "rb") as _f:
@@ -60,7 +62,7 @@ _MODEL = ETAModel(**_bundle["config"])
 _MODEL.load_state_dict(_bundle["state_dict"])
 _MODEL.eval()
 
-# ── Precompute feature indices ────────────────────────────────────────
+# --- Feature Index Precomputation ---
 
 _FEATURE_NAMES = get_feature_names()
 _BOROUGH_COLS = [i for i, n in enumerate(_FEATURE_NAMES) if n.startswith("borough_")]
@@ -75,7 +77,7 @@ _CONT_COLS = [
 _CONT_INDICES = [_FEATURE_NAMES.index(c) for c in _CONT_COLS if c in _FEATURE_NAMES]
 
 
-# ── Predict ───────────────────────────────────────────────────────────
+# --- Inference Interface ---
 
 def predict(request: dict) -> float:
     """Predict trip duration in seconds.

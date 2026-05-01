@@ -1,11 +1,8 @@
-"""Shared feature engineering — imported by experiments, train.py, and predict.py.
+"""
+Feature Engineering Module for GobbleCube ETA Challenge.
 
-Features:
-    Baseline: pickup_zone, dropoff_zone, hour, dow, month, passenger_count
-    Zone geometry: haversine_km, bearing_deg, pickup_borough, dropoff_borough
-    Zone-pair interaction: same_borough flag
-    Temporal: hour_sin, hour_cos (cyclic), is_weekend, is_rush_hour
-    Interactions: distance × rush hour, distance × time-of-day (hour_sin/cos)
+Shared module for both training and inference. Computes static zone metadata, 
+vectorized haversine distances, bearings, and cyclic temporal features.
 """
 
 from __future__ import annotations
@@ -17,9 +14,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Zone centroid lookup (lazy-loaded from zone_centroids.csv)
-# ---------------------------------------------------------------------------
+# --- Zone Centroid Lookup ---
 _CENTROIDS_PATH = Path(__file__).resolve().parent / "data" / "zone_centroids.csv"
 
 # Caches: zone_id -> (lat, lon, borough)
@@ -49,9 +44,7 @@ def _load_centroids() -> None:
     _loaded = True
 
 
-# ---------------------------------------------------------------------------
-# Vectorized haversine (numpy)
-# ---------------------------------------------------------------------------
+# --- Vectorized Geospatial Functions ---
 def _haversine_vec(lat1: np.ndarray, lon1: np.ndarray,
                    lat2: np.ndarray, lon2: np.ndarray) -> np.ndarray:
     """Vectorized haversine distance in kilometers."""
@@ -74,9 +67,7 @@ def _bearing_vec(lat1: np.ndarray, lon1: np.ndarray,
     return np.mod(bearing, 360.0)
 
 
-# ---------------------------------------------------------------------------
-# Numeric feature names (ordered list for model consistency)
-# ---------------------------------------------------------------------------
+# --- Feature Name Definitions ---
 # Baseline
 NUMERIC_FEATURES: List[str] = [
     "pickup_zone",
@@ -142,9 +133,7 @@ def _get_haversine_single(pu: int, do: int) -> float:
     return d
 
 
-# ---------------------------------------------------------------------------
-# DataFrame feature builder (train/dev codepath)
-# ---------------------------------------------------------------------------
+# --- Training/Validation Feature Builder ---
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
     """Build full feature matrix from a raw trip DataFrame.
 
@@ -215,9 +204,7 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     return features[get_feature_names()]
 
 
-# ---------------------------------------------------------------------------
-# Scalar feature builder (used by predict.py for single request)
-# ---------------------------------------------------------------------------
+# --- Inference Feature Builder ---
 def build_features_scalar(pickup_zone: int, dropoff_zone: int,
                           hour: int, dow: int, month: int,
                           passenger_count: int) -> np.ndarray:
