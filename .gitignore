@@ -7,22 +7,13 @@ data/raw/
 data/taxi_zones/
 data/taxi_zones.zip
 
-# Model artifacts (generated)
-models/*.pkl
-models/*.onnx
-model.pkl
-src/model.pkl
-
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 *.so
-
-# Secrets
-.hash_salt
-**/.hash_salt
+.pytest_cache/
 
 # OS
 .DS_Store
